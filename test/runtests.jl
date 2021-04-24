@@ -52,3 +52,9 @@ end
     @test problem13("MMCMX") == 2910
     @test problem13("MCMXCVI") == 1996
 end
+
+@testset verbose = true "Problem14 tests" begin
+    @test problem14(["flower","flow","flight"]) == "fl"
+    @test problem14(["dog","racecar","car"]) == ""
+    @test problem14(["flower","flow"]) == "flow"
+end

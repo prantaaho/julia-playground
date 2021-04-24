@@ -1,6 +1,6 @@
 module leetcode
 
-export problem1, problem7a, problem7b, problem9, problem13
+export problem1, problem7a, problem7b, problem9, problem13, problem14
 
 """
     problem1(nums::Vector{Int}, trgt::Int)
@@ -38,7 +38,8 @@ end  # problem1
 
 
 """
-    problem7a(x::Int)
+    problem7a(x::Int32)
+    problem7a(x::Int64)
 
 Given a signed 32-bit integer ``x``, return ``x`` with its digits reversed. If reversing
 ``x`` causes the value to go outside the signed 32-bit integer range ``[-2^{31}, 2^{31} -
@@ -128,6 +129,8 @@ end
 
 
 """
+    problem13(romannumber::String)
+
 Roman numerals are represented by seven different symbols: ``I, V, X, L, C, D``
 and ``M``.
 
@@ -168,7 +171,7 @@ function problem13(romannumber::String)
     for char in romannumber
         val = romans[char]
         # Set ENV["JULIA_DEBUG"] = leetcode to enable logging
-        @debug "Variables: " prev val
+        # @debug "Variables: " prev val
         if prev > 0 && prev < val
             decimal += val - prev
             prev = 0
@@ -178,6 +181,30 @@ function problem13(romannumber::String)
         end
     end
     decimal += prev
+end
+
+"""
+    problem14(words::Vector{String})
+
+Write a function to find the longest common prefix string amongst an array of strings.
+
+If there is no common prefix, return an empty string "".
+
+```juliadoctest
+julia> problem14(["flower","flow","flight"])
+"fl"
+```
+"""
+function problem14(words::Vector{String})
+    common = ""
+    for letters in zip(words...)
+        if length(unique(letters)) == 1  # Could also use Set
+            common *= letters[1]
+        else
+            break
+        end
+    end
+    common
 end
 
 end # module
