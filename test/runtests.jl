@@ -42,3 +42,13 @@ end
     @test problem9(12321) == true
     @test problem9(0) == true
 end
+
+@testset verbose = true "Problem13 tests" begin
+    @test problem13("III") == 3
+    @test problem13("V") == 5
+    @test problem13("IV") == 4
+    @test problem13("CXLI") == 141
+    @test problem13("CDXLII") == 442
+    @test problem13("MMCMX") == 2910
+    @test problem13("MCMXCVI") == 1996
+end
