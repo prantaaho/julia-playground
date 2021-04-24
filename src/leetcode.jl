@@ -1,6 +1,6 @@
 module leetcode
 
-export problem1, problem7a, problem7b
+export problem1, problem7a, problem7b, problem9
 
 """
     problem1(nums::Vector{Int}, trgt::Int)
@@ -21,7 +21,7 @@ Constraints:
 [https://leetcode.com/problems/two-sum/](https://leetcode.com/problems/two-sum/)
 
 # Examples
-```jldoctest; setup = :(using leetcode)
+```jldoctest
 julia> problem1([8,3,4,5], 8)
 1×2 Matrix{Int64}:
  2  4
@@ -47,13 +47,13 @@ Given a signed 32-bit integer ``x``, return ``x`` with its digits reversed. If r
 a-variant is solution with integer arithmetics.
 
 # Examples
-```jldoctest; setup = :(using leetcode)
+```jldoctest
 julia> problem7a(123)
 321
 
 julia> problem7a(-123)
 -321
-````
+```
 """
 function problem7a(x::Int32)
     y = abs(x)
@@ -86,13 +86,13 @@ Given a signed 32-bit integer ``x``, return ``x`` with its digits reversed. If r
 b-variant is solution with string casting.
 
 # Examples
-```jldoctest; setup = :(using leetcode)
+```jldoctest
 julia> problem7b(123)
 321
 
 julia> problem7b(-123)
 -321
-````
+```
 """
 function problem7b(x::Int)
     try
@@ -101,5 +101,28 @@ function problem7b(x::Int)
         0
     end
 end
+
+
+"""
+    problem9(x::Int)
+
+Given an integer x, return true if x is palindrome integer.
+
+An integer is a palindrome when it reads the same backward as forward. For
+example, 121 is palindrome while 123 is not.
+
+```juldoctest
+julia> problem9(121)
+true
+
+julia> problem9(123)
+false
+```
+"""
+function problem9(x::Int)
+    s = string(x)
+    s == reverse(s)
+end
+
 
 end # module
