@@ -55,23 +55,26 @@ julia> problem7a(-123)
 -321
 ````
 """
-function problem7a(x::Int)
-    sg = sign(x)
-    if x < 0
-        x = -x
-    end
-    inverse = 0
-    max_int = 2^31 - 1
-    while x > 0
-        inverse = inverse * 10 + x % 10
-        x = x ÷ 10
-        if inverse > max_int
-            return 0
+function problem7a(x::Int32)
+    y = abs(x)
+    inverse::Int32 = 0
+    try
+        while y > 0
+            inverse = inverse * 10 + y % 10
+            y = y ÷ 10
         end
+        sign(x) * inverse
+    catch InexactError
+        0
     end
-    inverse = inverse * sg
-end  # problem7a
-
+end
+function problem7a(x::Int64)
+    try
+        problem7a(Int32(x))
+    catch InexactError
+        0
+    end
+end
 
 """
     problem7b(x::Int)
@@ -94,7 +97,7 @@ julia> problem7b(-123)
 function problem7b(x::Int)
     try
         sign(x) * parse(Int32, reverse(string(abs(x))))
-    catch
+    catch InexactError
         0
     end
 end
