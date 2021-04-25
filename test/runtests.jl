@@ -43,6 +43,16 @@ end
     @test problem9(0) == true
 end
 
+@testset verbose = true "Problem12 tests" begin
+    @test problem12(3) == "III"
+    @test problem12(5) == "V"
+    @test problem12(4) == "IV"
+    @test problem12(146) == "CXLVI"
+    @test problem12(442) == "CDXLII"
+    @test problem12(2888) == "MMDCCCLXXXVIII"
+    @test problem12(1996) == "MCMXCVI"
+end
+
 @testset verbose = true "Problem13 tests" begin
     @test problem13("III") == 3
     @test problem13("V") == 5
