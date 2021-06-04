@@ -1,41 +1,43 @@
 module redblacktree
 
-export RBNode, RedBlackTree
+export RBNode, RedBlackTree, plottree, black_nodes, height
 
-import Base: insert!
+import Base: insert!, delete!, haskey, in, length
 
-# using Plots
+using Plots
 
-mutable struct RBNode{K,V}
+mutable struct RBNode{K}
     key::K
-    value::V
-    parent::Union{RBNode{K,V}, Nothing}
-    left::Union{RBNode{K,V}, Nothing}
-    right::Union{RBNode{K,V}, Nothing}
+    parent::Union{RBNode{K}, Nothing}
+    left::Union{RBNode{K}, Nothing}
+    right::Union{RBNode{K}, Nothing}
     is_red::Bool
     is_left::Bool
 end
 	
-function RBNode(key, value)
-    RBNode(key, value, nothing, nothing, nothing, true, false)
+function RBNode(key)
+    RBNode(key, nothing, nothing, nothing, true, false)
 end
 
 
-mutable struct RedBlackTree
-    root::Union{RBNode, Nothing}
+mutable struct RedBlackTree{K}
+    root::Union{RBNode{K}, Nothing}
     size::Int
 end
 
-function RedBlackTree(key, value)
-    n = RBNode(key,value)
+function RedBlackTree(key::K) where K
+    n = RBNode(key)
     n.is_red = false
     RedBlackTree(n, 1)
 end
 
-function RedBlackTree(n::RBNode)
+function RedBlackTree(n::RBNode{K}) where K
     n.is_red = false
     RedBlackTree(n, 1)
 end
+
+Base.length(tree::RedBlackTree) = tree.size
+
 
 function left_rotate!(tree::RedBlackTree, node::RBNode)
     tmp = node.right
@@ -89,7 +91,6 @@ function right_rotate!(tree::RedBlackTree, node::RBNode)
     node.parent = tmp
 end
     
-
 function left_right_rotate!(tree::RedBlackTree, node::RBNode)
     left_rotate!(tree, node.parent)
     right_rotate!(tree, node.parent)
@@ -151,6 +152,7 @@ function correct_tree(tree::RedBlackTree, node::RBNode)
     end
     node.parent.parent.is_red = true
     node.parent.is_red = false
+    tree.root.is_red = false
 end
 
 function check_color(tree::RedBlackTree, node::Nothing)
@@ -166,9 +168,8 @@ function check_color(tree::RedBlackTree, node::RBNode)
     check_color(tree, node.parent)
 end
 
-function add_child!(parent::RBNode, new_node::RBNode)
+function add_child!(parent::RBNode{K}, new_node::RBNode{K}) where K
     if parent.key == new_node.key
-        parent.value = new_node.value
         return false
     end
     if new_node.key < parent.key
@@ -190,8 +191,8 @@ function add_child!(parent::RBNode, new_node::RBNode)
     end
     new_node.is_red = true
 end
-        
-function insert!(tree::RedBlackTree, new_node::RBNode)
+ 
+function insert!(tree::RedBlackTree{K}, new_node::RBNode{K}) where K
     if tree.root === nothing
         tree.root = new_node
         tree.root.is_red = false
@@ -204,8 +205,8 @@ function insert!(tree::RedBlackTree, new_node::RBNode)
     end
 end
 
-function insert!(tree::RedBlackTree, key, value)
-    node = RBNode(key, value)
+function insert!(tree::RedBlackTree{K}, key::K) where K
+    node = RBNode(key)
     insert!(tree, node)
 end
 
@@ -242,6 +243,83 @@ function black_nodes(tree::RedBlackTree)
     black_nodes(tree.root)
 end
 
+
+function search_tree(node::RBNode{K}, key::K) where K
+    if node.key == key
+        return node
+    elseif node.left !== nothing && node.key > key 
+        return search_tree(node.left, key)
+    elseif node.right !== nothing && node.key < key 
+        return search_tree(node.right, key)
+    end
+    return nothing
+end
+
+function Base.haskey(tree::RedBlackTree{K}, key::K) where K
+    return search_tree(tree.root, key) !== nothing
+end
+
+Base.in(key, tree::RedBlackTree) = haskey(tree::RedBlackTree, key)
+
+function remove_leaf!(tree::RedBlackTree{K}, node::RBNode{K}) where K
+    @assert node.left === nothing && node.right === nothing "Not a leaf node $(node.key)"
+    if node.is_left
+        node.parent.left = nothing
+    else
+        node.parent.right = nothing
+    end
+    tree.size -= 1
+    return tree
+end
+
+function Base.delete!(tree::RedBlackTree{K}, key::K) where K
+    node = search_tree(tree.root, key)
+    if node === nothing
+        return tree
+    end
+    return delete!(tree, node)
+end
+
+function Base.delete!(tree::RedBlackTree{K}, node::RBNode{K}) where K
+    if node === nothing
+        return tree
+    end
+    # Remove leaf node
+    if node.left === nothing && node.right === nothing
+        return remove_leaf!(tree, node)
+    end
+
+    # Find the closest nodes
+    replacement_r = node.right
+    if replacement_r !== nothing
+        while replacement_r.left !== nothing
+            replacement_r = replacement_r.left
+        end
+    end
+    replacement_l = node.left
+    if replacement_l !== nothing
+        while replacement_l.right !== nothing
+            replacement_l = replacement_l.right
+        end
+    end
+
+    # Replace node with leaf and remove leaf
+    if replacement_r !== nothing
+        node.key = replacement_r.key
+        delete!(tree, replacement_r)
+        if ! replacement_r.is_red  # Removal of black node causes imbalance
+            correct_tree(tree, replacement_l)
+        end
+    else
+        node.key = replacement_l.key
+        delete!(tree, replacement_l)
+        if ! replacement_l.is_red  # Removal of black node causes imbalance
+            correct_tree(tree, replacement_r)
+        end
+    end
+    return tree
+end
+
 #=
 begin
 	insert!(t2, 1, "b")
@@ -252,49 +330,31 @@ begin
 	insert!(t2, 12, "b")
 	t2
 end
+=#
 
-# ╔═╡ 0b6a7cc9-e70d-4109-bc6c-702effae6ba9
-let
-	rectangle(w, h, x, y) = Shape(x .+ [0,w,w,0], y .+ [0,0,h,h])
-	
-	bw = 1.2
+function plot_node!(node::RBNode, x, y, px, py, scale)
+    rectangle(w, h, x, y) = Shape(x .+ [0,w,w,0], y .+ [0,0,h,h])
+
+    bw = 1.2
 	bh = 0.45
-	
-	x = 10
+
+    if node.left !== nothing
+        plot_node!(node.left, x - (scale/2), y - 1.2, x, y, scale/2)
+    end
+    if node.right !== nothing
+        plot_node!(node.right, x + (scale/2) , y - 1.2, x, y, scale/2)
+    end
+    plot!([x, px].+0.5*bw, [y, py].+0.5*bh, color=:black)
+    plot!(rectangle(bw,bh,x,y), color=node.is_red ? :darkred : :gray40, 
+    annotations=(x + 0.5*bw, y + 0.5*bh, text("$(node.key)", :green3)))
+end
+
+function plottree(tree::RedBlackTree)
+	x = 1
 	y = 10
-
-	function plot_node!(node::RBNode, x, y, px, py, scale)
-		if node.left != nothing
-			plot_node!(node.left, x - (scale), y - 1.2, x, y, scale-1)
-		end
-		if node.right != nothing
-	  		plot_node!(node.right, x + (scale) , y - 1.2, x, y, scale-1)
-		end
-		plot!([x, px].+0.5*bw, [y, py].+0.5*bh, color=:black)
-		plot!(rectangle(bw,bh,x,y), color=node.is_red ? :darkred : :gray40, 
-		annotations=(x + 0.5*bw, y + 0.5*bh, text("$(node.key): $(node.value)", :green3)))
-	end
-
 	plot(x, y, legend=:none)
-	plot_node!(t2.root, x, y, x,y, height(t2))
-
+	plot_node!(tree.root, x, y, x,y, height(tree)^2)
 	
 end
 
-# ╔═╡ c499645e-4f83-4c84-af11-cad560b46288
-"[$(t.root.key)]"
-
-# ╔═╡ Cell order:
-# ╠═c6b0f5a7-dd39-42c7-9cbd-64844235f135
-# ╠═32a43c3f-3c37-4642-bbc5-0c536619f2c4
-# ╠═480bd3ee-713f-4ff5-b3a6-3b4373884a5b
-# ╠═c1ea8484-c10b-4ab6-966e-fdc356fd486c
-# ╠═5fbb1e84-9968-4dcf-b726-4da7cfe6c859
-# ╠═6a2095d7-0809-43bc-81af-8cad3bb9d9d1
-# ╠═b9f6884e-92a1-4f60-a339-8263cd1878cd
-# ╠═01692ce8-7882-4189-9af1-e9282aac0d6e
-# ╠═0b6a7cc9-e70d-4109-bc6c-702effae6ba9
-# ╠═c499645e-4f83-4c84-af11-cad560b46288
-
-=#
 end # module
